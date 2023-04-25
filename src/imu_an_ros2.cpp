@@ -1,26 +1,25 @@
-//#define BACKWARD_HAS_DW 1
-//#include "backward.hpp"
-// namespace backward
-//{
-// backward::SignalHandling sh;
-//}
+// system library
+#include <iostream>
+#include <mutex>
+#include <queue>
+#include <fstream>
 
+// custom library
 #include "acc_lib/allan_acc.h"
 #include "acc_lib/fitallan_acc.h"
 #include "gyr_lib/allan_gyr.h"
 #include "gyr_lib/fitallan_gyr.h"
-#include "code_utils/ros_utils.h"
-#include <geometry_msgs/Vector3Stamped.h>
-#include <iostream>
-#include <mutex>
+// third party library
 #include <opencv2/opencv.hpp>
-#include <queue>
-#include <ros/ros.h>
-#include <sensor_msgs/Imu.h>
+// ros2 library
+#include <rclcpp/rclcpp.hpp>
+#include <sensor_msgs/msg/imu.hpp>
+// #include <geometry_msgs/msg/Vector3Stamped.h>
 
 std::mutex m_buf;
 
-std::queue< sensor_msgs::ImuConstPtr > imu_buf;
+std::queue<sensor_msgs::msg::Imu::SharedPtr> imu_buf;
+
 imu::AllanGyr* gyr_x;
 imu::AllanGyr* gyr_y;
 imu::AllanGyr* gyr_z;
@@ -33,13 +32,9 @@ bool end         = false;
 int max_time_min = 10;
 std::string data_save_path;
 
-void
-imu_callback( const sensor_msgs::ImuConstPtr& imu_msg )
+void imu_callback(const sensor_msgs::msg::Imu::SharedPtr imu_msg)
 {
-    //    m_buf.lock( );
-    //    imu_buf.push( imu_msg );
-    //    m_buf.unlock( );
-    double time = imu_msg->header.stamp.toSec( );
+    double time = imu_msg->header.stamp.sec;
     gyr_x->pushRadPerSec( imu_msg->angular_velocity.x, time );
     gyr_y->pushRadPerSec( imu_msg->angular_velocity.y, time );
     gyr_z->pushRadPerSec( imu_msg->angular_velocity.z, time );
@@ -60,8 +55,7 @@ imu_callback( const sensor_msgs::ImuConstPtr& imu_msg )
     }
 }
 
-void
-writeData1( const std::string sensor_name, //
+void writeData1( const std::string sensor_name, //
             const std::vector< double >& gyro_ts_x,
             const std::vector< double >& gyro_d )
 {
@@ -80,8 +74,7 @@ writeData1( const std::string sensor_name, //
     out_x.close( );
 }
 
-void
-writeData3( const std::string sensor_name,
+void writeData3( const std::string sensor_name,
             const std::vector< double >& gyro_ts_x,
             const std::vector< double >& gyro_d_x,
             const std::vector< double >& gyro_d_y,
@@ -100,7 +93,7 @@ writeData3( const std::string sensor_name,
     out_y << std::setprecision( 10 );
     out_z << std::setprecision( 10 );
 
-    for ( int index = 0; index < gyro_ts_x.size( ); ++index )
+    for ( int index = 0; index < (int)gyro_ts_x.size( ); ++index )
     {
         out_t << gyro_ts_x[index] << '\n';
         out_x << gyro_d_x[index] << '\n';
@@ -114,8 +107,7 @@ writeData3( const std::string sensor_name,
     out_z.close( );
 }
 
-void
-writeYAML( const std::string data_path,
+void writeYAML( const std::string data_path,
            const std::string sensor_name,
            const imu::FitAllanGyr& gyr_x,
            const imu::FitAllanGyr& gyr_y,
@@ -201,29 +193,26 @@ writeYAML( const std::string data_path,
     fs.release( );
 }
 
-int
-main( int argc, char** argv )
+int main( int argc, char** argv )
 {
-    ros::init( argc, argv, "gyro_test" );
-    ros::NodeHandle n( "~" );
-    ros::console::set_logger_level( ROSCONSOLE_DEFAULT_NAME, ros::console::levels::Debug );
+    rclcpp::init(argc, argv);
+    auto node = std::make_shared<rclcpp::Node>( "gyro_test" );
+    // rclcpp::Logger logger = node->get_logger( "gyro_test" );
+    // rclcpp::set_logger_level(logger.get_name( ), rclcpp::LogLevel::Debug );
 
     std::string IMU_TOPIC;
     std::string IMU_NAME;
     int max_cluster;
 
-    IMU_TOPIC      = ros_utils::readParam< std::string >( n, "imu_topic" );
-    IMU_NAME       = ros_utils::readParam< std::string >( n, "imu_name" );
-    data_save_path = ros_utils::readParam< std::string >( n, "data_save_path" );
-    max_time_min   = ros_utils::readParam< int >( n, "max_time_min" );
-    max_cluster    = ros_utils::readParam< int >( n, "max_cluster" );
+    node->get_parameter("imu_topic", IMU_TOPIC);
+    node->get_parameter("imu_name", IMU_NAME);
+    node->get_parameter("data_save_path", data_save_path);
+    node->get_parameter("max_time_min", max_time_min);
+    node->get_parameter("max_cluster", max_cluster);
 
-    ros::Subscriber sub_imu = n.subscribe( IMU_TOPIC, //
-                                           20000000,
-                                           imu_callback,
-                                           ros::TransportHints( ).tcpNoDelay( ) );
-    //    ros::Publisher pub = n.advertise< geometry_msgs::Vector3Stamped >( ALLAN_TOPIC,
-    //    2000 );
+    auto sub_imu = node->create_subscription<sensor_msgs::msg::Imu>(IMU_TOPIC,
+                                                                    rclcpp::QoS(rclcpp::SensorDataQoS().reliable()),
+                                                                    imu_callback);
 
     gyr_x = new imu::AllanGyr( "gyr x", max_cluster );
     gyr_y = new imu::AllanGyr( "gyr y", max_cluster );
@@ -232,13 +221,14 @@ main( int argc, char** argv )
     acc_y = new imu::AllanAcc( "acc y", max_cluster );
     acc_z = new imu::AllanAcc( "acc z", max_cluster );
     std::cout << "wait for imu data." << std::endl;
-    ros::Rate loop( 100 );
+    
+    rclcpp::Rate loop( 100 );
 
-    //    ros::spin( );
-    while ( !end )
+    //    rclcpp::spin( node );
+    while ( rclcpp::ok() )
     {
         loop.sleep( );
-        ros::spinOnce( );
+        rclcpp::spin_some( node );
     }
 
     ///
@@ -317,6 +307,7 @@ main( int argc, char** argv )
     writeData3( IMU_NAME + "_acc", acc_ts_x, acc_d_x, acc_d_y, acc_d_z );
 
     writeYAML( data_save_path, IMU_NAME, fit_gyr_x, fit_gyr_y, fit_gyr_z, fit_acc_x, fit_acc_y, fit_acc_z );
-
+    
+    rclcpp::shutdown();
     return 0;
 }

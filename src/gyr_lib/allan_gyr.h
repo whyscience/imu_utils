@@ -1,7 +1,7 @@
 #ifndef ALLAN_H
 #define ALLAN_H
 
-#include "../type.h"
+#include "ros2_imu_utils/type.h"
 #include <iostream>
 #include <math.h>
 #include <vector>
