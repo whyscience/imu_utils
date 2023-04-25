@@ -17,8 +17,7 @@
 // #include <geometry_msgs/msg/Vector3Stamped.h>
 
 std::mutex m_buf;
-
-std::queue<sensor_msgs::msg::Imu::SharedPtr> imu_buf;
+// std::queue<sensor_msgs::msg::Imu::SharedPtr> imu_buf;
 
 imu::AllanGyr* gyr_x;
 imu::AllanGyr* gyr_y;
@@ -200,15 +199,28 @@ int main( int argc, char** argv )
     // rclcpp::Logger logger = node->get_logger( "gyro_test" );
     // rclcpp::set_logger_level(logger.get_name( ), rclcpp::LogLevel::Debug );
 
-    std::string IMU_TOPIC;
-    std::string IMU_NAME;
-    int max_cluster;
+    std::string IMU_TOPIC = node->declare_parameter<std::string>("imu_topic", "");
+    std::string IMU_NAME = node->declare_parameter<std::string>("imu_name", "");
+    data_save_path = node->declare_parameter<std::string>("data_save_path", "");
+    max_time_min = node->declare_parameter<int>("max_time_min", 0);
+    int max_cluster = node->declare_parameter<int>("max_cluster", 0);
 
-    node->get_parameter("imu_topic", IMU_TOPIC);
-    node->get_parameter("imu_name", IMU_NAME);
-    node->get_parameter("data_save_path", data_save_path);
-    node->get_parameter("max_time_min", max_time_min);
-    node->get_parameter("max_cluster", max_cluster);
+    // RS_INFO << "--------------------------------------------------------" << RS_REND;
+    // RS_INFO << "imu_topic:" << RS_REND;
+    // RS_INFO << IMU_TOPIC << RS_REND;
+
+    // RS_INFO << "imu_name:" << RS_REND;
+    // RS_INFO << IMU_NAME << RS_REND;
+
+    // RS_INFO << "data_save_path:" << RS_REND;
+    // RS_INFO << data_save_path << RS_REND;
+
+    // RS_INFO << "max_time_min:" << RS_REND;
+    // RS_INFO << max_time_min << RS_REND;
+    
+    // RS_INFO << "max_cluster:" << RS_REND;
+    // RS_INFO << max_cluster << RS_REND;
+    // RS_INFO << "--------------------------------------------------------" << RS_REND;
 
     auto sub_imu = node->create_subscription<sensor_msgs::msg::Imu>(IMU_TOPIC,
                                                                     rclcpp::QoS(rclcpp::SensorDataQoS().reliable()),
@@ -224,8 +236,7 @@ int main( int argc, char** argv )
     
     rclcpp::Rate loop( 100 );
 
-    //    rclcpp::spin( node );
-    while ( rclcpp::ok() )
+    while (rclcpp::ok())
     {
         loop.sleep( );
         rclcpp::spin_some( node );
