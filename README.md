@@ -47,3 +47,6 @@ ros2 bag  play [ros2bag_save_path] -r 200
 ros2 bag  play imu_2023-04-25-16_00_37 -r 200
 ```
 ![](./figure/imu_cali2.gif)
+
+## 引用
+[gaowenliang/imu_utils](https://github.com/gaowenliang/imu_utils)
