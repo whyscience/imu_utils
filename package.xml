@@ -15,20 +15,6 @@
   <depend>sensor_msgs</depend>
   <depend>nav_msgs</depend>
 
-  <!-- other library -->
-  <!-- <depend>OpenCV</depend>
-  <depend>Ceres</depend>
-  <depend>Eigen3</depend> -->
-  <build_depend>OpenCV</build_depend>
-  <exec_depend>OpenCV</exec_depend>
-
-  <build_depend>Ceres</build_depend>
-  <exec_depend>Ceres</exec_depend>
-
-  <build_depend>Eigen3</build_depend>
-  <exec_depend>Eigen3</exec_depend>
-
-
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>
 
