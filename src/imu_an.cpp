@@ -17,7 +17,7 @@
 #include <queue>
 #include <ros/ros.h>
 #include <sensor_msgs/Imu.h>
-
+#include <fstream>
 std::mutex m_buf;
 
 std::queue< sensor_msgs::ImuConstPtr > imu_buf;
