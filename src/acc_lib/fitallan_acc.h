@@ -3,8 +3,7 @@
 
 #include <ceres/ceres.h>
 #include <cmath>
-#include <eigen3/Eigen/Eigen>
-
+#include <Eigen/Dense>
 namespace imu
 {
 
