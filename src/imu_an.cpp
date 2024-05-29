@@ -100,7 +100,7 @@ writeData3( const std::string sensor_name,
     out_y << std::setprecision( 10 );
     out_z << std::setprecision( 10 );
 
-    for ( int index = 0; index < gyro_ts_x.size( ); ++index )
+    for ( unsigned int index = 0; index < gyro_ts_x.size( ); ++index )
     {
         out_t << gyro_ts_x[index] << '\n';
         out_x << gyro_d_x[index] << '\n';

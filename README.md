@@ -5,6 +5,22 @@ The figures are drawn by Matlab, in `scripts`.
 
 Actually, just analyze the Allan Variance for the IMU data. Collect the data while the IMU is Stationary, with a two hours duration.
 
+## install ceres (must use 1.14.0)
+
+```bash
+# CMake
+sudo apt-get install cmake libgoogle-glog-dev libgflags-dev  libatlas-base-dev  libeigen3-dev libsuitesparse-dev -y
+
+git clone https://github.com/ceres-solver/ceres-solver.git
+cd ceres-solver
+git checkout 1.14.0
+mkdir build
+cd build
+cmake ..
+make -j8
+sudo make install
+```
+
 ## refrence
 
 Refrence technical report: [`Allan Variance: Noise Analysis for Gyroscopes`](http://cache.freescale.com/files/sensors/doc/app_note/AN5087.pdf "Allan Variance: Noise Analysis for Gyroscopes"), [`vectornav gyroscope`](https://www.vectornav.com/support/library/gyroscope "vectornav gyroscope") and 
