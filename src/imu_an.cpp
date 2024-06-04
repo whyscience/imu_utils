@@ -32,7 +32,7 @@ bool start       = true;
 bool end         = false;
 int max_time_min = 10;
 std::string data_save_path;
-auto last_imu_time = ros::Time::now();
+ros::Time last_imu_time;
 
 void
 imu_callback( const sensor_msgs::ImuConstPtr& imu_msg )
