@@ -32,6 +32,7 @@ bool start       = true;
 bool end         = false;
 int max_time_min = 10;
 std::string data_save_path;
+auto last_imu_time = ros::Time::now();
 
 void
 imu_callback( const sensor_msgs::ImuConstPtr& imu_msg )
@@ -39,6 +40,7 @@ imu_callback( const sensor_msgs::ImuConstPtr& imu_msg )
     //    m_buf.lock( );
     //    imu_buf.push( imu_msg );
     //    m_buf.unlock( );
+    ROS_INFO_ONCE("imu_callback");
     double time = imu_msg->header.stamp.toSec( );
     gyr_x->pushRadPerSec( imu_msg->angular_velocity.x, time );
     gyr_y->pushRadPerSec( imu_msg->angular_velocity.y, time );
@@ -46,6 +48,7 @@ imu_callback( const sensor_msgs::ImuConstPtr& imu_msg )
     acc_x->pushMPerSec2( imu_msg->linear_acceleration.x, time );
     acc_y->pushMPerSec2( imu_msg->linear_acceleration.y, time );
     acc_z->pushMPerSec2( imu_msg->linear_acceleration.z, time );
+    last_imu_time = ros::Time::now();
 
     if ( start )
     {
@@ -55,8 +58,24 @@ imu_callback( const sensor_msgs::ImuConstPtr& imu_msg )
     else
     {
         double time_min = ( time - start_t ) / 60;
-        if ( time_min > max_time_min )
+        if ( time_min > max_time_min ){
             end = true;
+            ROS_WARN("end by max_time_min");
+        }
+
+    }
+}
+
+void timerCallback(const ros::TimerEvent&)
+{
+    if (!start)
+    {
+        ros::Duration time_diff = ros::Time::now() - last_imu_time;
+        if (time_diff.toSec() > 1.0)
+        {
+            ROS_WARN("IMU data is older than 1 second. end...");
+            end = true;
+        }
     }
 }
 
@@ -224,6 +243,7 @@ main( int argc, char** argv )
                                            ros::TransportHints( ).tcpNoDelay( ) );
     //    ros::Publisher pub = n.advertise< geometry_msgs::Vector3Stamped >( ALLAN_TOPIC,
     //    2000 );
+    ros::Timer timer = n.createTimer(ros::Duration(0.1), timerCallback);
 
     gyr_x = new imu::AllanGyr( "gyr x", max_cluster );
     gyr_y = new imu::AllanGyr( "gyr y", max_cluster );
