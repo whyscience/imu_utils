@@ -6,5 +6,4 @@
         <param name="max_time_min" type="int" value= "120"/>
         <param name="max_cluster" type="int" value= "100"/>
     </node>
-
 </launch>
